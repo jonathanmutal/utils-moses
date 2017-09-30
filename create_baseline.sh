@@ -102,9 +102,9 @@ nohup perl $path_execute/scripts/training/train-model.perl -mgiza -mgiza-cpus 12
 ### It's time to reduce tables!
 function reduce {
     wait $!
-    nohup $path_execute/bin/processPhraseTableMin -in $trans_dir/model/phrase-table.gz -out phrase-table -nscores 4 -threads 12 >& $path_execute/reducephrasetable.out &
+    nohup $path_execute/bin/processPhraseTableMin -in $trans_dir/model/phrase-table.gz -out $trans_dir/model/phrase-table -nscores 4 -threads 12 >& $trans_dir/model/reducephrasetable.out &
     wait $!
-    nohup $path_execute/bin/processLexicalTableMin -n $trans_dir/model/reordering-table.wbe-msd-bidirectional-fe.gz -out reordering-table.wbe-msd-bidirectional-fe -threads 12 >& $tans_dir/model/reduceLexicalTable.out &
+    nohup $path_execute/bin/processLexicalTableMin -in $trans_dir/model/reordering-table.wbe-msd-bidirectional-fe.gz -out $trans_dir/model/reordering-table -threads 12 >& $trans_dir/model/reduceLexicalTable.out &
 }
 opt='Y'
 while [[ $opt != 'Y' && $opt != 'N' ]] ; do
