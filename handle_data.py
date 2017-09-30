@@ -28,7 +28,7 @@ class handle_files:
         self.sc = sc
         self.tl = tl
 
-    def split_files(self):
+    def join_files(self):
         src_files = map(lambda x: self.root + '/' + x, filter(lambda file: '_' + self.sc + '.txt' in file , self.files))
         trg_files = map(lambda x: self.root + '/' + x, filter(lambda file: '_' + self.tl + '.txt' in file , self.files))
 
@@ -43,6 +43,8 @@ class handle_files:
         with open(filename, 'w') as f_write:
             with fileinput.input(files=files, mode='r') as f:
                 for line in f:
+                    if '<a' in line or "</a" in line:
+                        line = re.sub('<a.*?>|</a.*?>', '', a)
                     f_write.write(line)
                     if line=='':
                         f_write.write('\n')
