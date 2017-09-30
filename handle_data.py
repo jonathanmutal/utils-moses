@@ -1,8 +1,8 @@
 import fileinput
 import argparse
-import xml.etree.ElementTree as ET
 import os
 import sys
+import re
 
 def progress(msg, width=None):
     """Ouput the progress of something on the same line."""
@@ -53,8 +53,8 @@ class handle_files:
         """
         total_size = os.path.getsize(self.files[0])
         partial_size = 0
-        file_sc = 'train_xml.' + self.sc + '.txt'
-        file_tg = 'train_xml.' + self.tl + '.txt'
+        file_sc = 'train.' + self.sc + '.txt'
+        file_tg = 'train.' + self.tl + '.txt'
         is_source = True
         with open(file_sc, 'w') as fw_source:
             with open(file_tg, 'w') as fw_target:
@@ -63,11 +63,23 @@ class handle_files:
                         partial_size += len(line)
                         line_striped = line.strip()
                         if line_striped.startswith('<seg>'):
+                            while "</seg>" not in line_striped:
+                                aline = f_xml.readline()
+                                partial_size += len(aline)
+                                line_striped += aline.strip()
+                            line_clean = re.sub('<seg>', '', line_striped)
+                            line_clean = re.sub('</seg>', '', line_clean)
+                            if "<bpt" in line_clean:
+                                line_clean = re.sub('<bpt.*? />', '', line_clean)
+                            if "<ept" in line_clean:
+                                line_clean = re.sub('<ept.*? />', ' ', line_clean)
+                            if "<ph" in line_clean:
+                                line_clean = re.sub('<ph.*? />', '', line_clean)
                             if is_source:
-                                fw_source.write(line_striped[5:-6])
+                                fw_source.write(line_clean)
                                 fw_source.write('\n')
                             else:
-                                fw_target.write(line_striped[5:-6])
+                                fw_target.write(line_clean)
                                 fw_target.write('\n')
                             is_source = not is_source
                             progress('{:2.2f}% '.format((partial_size / total_size) * 100))
@@ -88,23 +100,3 @@ class handle_files:
                         fs_write.write(b'\n')
                         fg_write.write(line_splited[1])
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Get a set of bytecode files \
-                                     and get a new one (with format UTF-16).')
-    parser.add_argument('-r', '--root', help='root directory', nargs=1,
-                        required=True)
-    parser.add_argument('-t', '--typet', help='training or tuning', nargs=1)
-    parser.add_argument('-f','--files',
-                        help='list of files. Example: file1.txt file2.txt',
-                        nargs='*', required=True)
-    parser.add_argument('-sl', '--src_language', help='language src',
-                        nargs=1, type=str, required=True)
-    parser.add_argument('-tl', '--trg_language', help='language trg',
-                        nargs=1, type=str, required=True)
-    args = parser.parse_args()
-
-    hf = handle_files(args.root[0], args.files, args.src_language[0], args.trg_language[0], args.typet[0])
-    hf.split_files() # group all files in one.
-  #  hf = handle_files(args.root[0], args.files, args.src_language[0], args.trg_language[0])
-    # hf.parse_xml()
-   # hf.csv2file()
