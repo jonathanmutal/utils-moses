@@ -33,24 +33,20 @@ fi
 token_dir=$path_save'/token'
 # make directory token
 if [ ! -d $token_dir ]; then
-    mkdir $token_dir
+   mkdir $token_dir
 fi
 
 name_file_train_S=$name_file'.'$SL'.'txt
 name_file_train_T=$name_file'.'$TL'.'txt
 
-if [ ! -f $train_dir/$name_file_train_T ]; then
-    read -p "The training data is getting ready, press enter!"
-    python3 ~/moses/jonhy_ws/scripts/split_data.py -r $train_dir -t $name_file -f *'.align' -sl $SL -tl $TL
-fi
 
 name_file_tok=$name_file'.tok'
-perl $path_execute/scripts/tokenizer/tokenizer.perl -l $SL < $train_dir/$name_file_train_S > $token_dir/$name_file_tok'.'$SL
-perl $path_execute/scripts/tokenizer/tokenizer.perl -l $TL < $train_dir/$name_file_train_T > $token_dir/$name_file_tok'.'$TL
+perl $path_execute/scripts/tokenizer/tokenizer.perl -l $SL -threads 12 < $train_dir/$name_file_train_S > $token_dir/$name_file_tok'.'$SL
+perl $path_execute/scripts/tokenizer/tokenizer.perl -l $TL -threads 12 < $train_dir/$name_file_train_T > $token_dir/$name_file_tok'.'$TL
 
 echo "tokening have already finished..."
 ############################# CLEAN DATA #####################################
-opt=''
+opt='Y'
 while [[ $opt != 'Y' && $opt != 'N' ]] ; do
     echo 'Clean data?[Y/N]'
     read opt
@@ -74,7 +70,7 @@ fi
 echo "It's time to train our Model Language!"
 echo "We are working in this, please be pacient! For now we only train n-grams models"
 
-n_gram=-1
+n_gram=4
 while [ $n_gram -lt 0 ]; do
     echo 'Please choose an N for N-gram'
     read n_gram
@@ -98,4 +94,24 @@ if [ ! -d $trans_dir ]; then
     mkdir $trans_dir
 fi
 
-nohup perl $path_execute/scripts/training/train-model.perl -root-dir $trans_dir -corpus $token_dir/$name_file_clean -f $SL -e $TL -alignment grow-diag-final-and -reordering msd-bidirectional-fe -lm 0':'3':'$ml_dir/$binarise_file':'8 -external-bin-dir $path_execute/tools >& $path_save/training.out &
+# nohup perl $path_execute/scripts/training/train-model.perl -cores 12 -root-dir $trans_dir -corpus $token_dir/$name_file_clean -f $SL -e $TL -alignment grow-diag-final-and -reordering msd-bidirectional-fe -lm 0':'3':'$ml_dir/$binarise_file':'8 -external-bin-dir $path_execute/tools >& $path_save/training.out &
+
+### Trying with m-giza
+nohup perl $path_execute/scripts/training/train-model.perl -mgiza -mgiza-cpus 12 -root-dir $trans_dir -corpus $token_dir/$name_file_clean -f $SL -e $TL -alignment grow-diag-final-and -reordering msd-bidirectional-fe -lm 0':'3':'$ml_dir/$binarise_file':'8 -external-bin-dir $path_execute/tools >& $path_save/training.out &
+
+### It's time to reduce tables!
+function reduce {
+    wait $!
+    nohup $path_execute/bin/processPhraseTableMin -in $trans_dir/model/phrase-table.gz -out phrase-table -nscores 4 -threads 12 >& $path_execute/reducephrasetable.out &
+    wait $!
+    nohup $path_execute/bin/processLexicalTableMin -n $trans_dir/model/reordering-table.wbe-msd-bidirectional-fe.gz -out reordering-table.wbe-msd-bidirectional-fe -threads 12 >& $tans_dir/model/reduceLexicalTable.out &
+}
+opt='Y'
+while [[ $opt != 'Y' && $opt != 'N' ]] ; do
+    echo 'Reduce tables?[Y/N]'
+    read opt
+done
+
+if [[ $opt == 'Y' ]]; then
+    reduce
+fi
