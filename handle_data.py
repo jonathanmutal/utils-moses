@@ -44,7 +44,7 @@ class handle_files:
             with fileinput.input(files=files, mode='r') as f:
                 for line in f:
                     if '<a' in line or "</a" in line:
-                        line = re.sub('<a.*?>|</a.*?>', '', a)
+                        line = re.sub('<a.*?>|</a.*?>', '', line)
                     f_write.write(line)
                     if line=='':
                         f_write.write('\n')
