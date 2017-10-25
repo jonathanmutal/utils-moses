@@ -34,5 +34,5 @@ for d in $work_dir/*_$SL'.'tok; do
     nohup $path_execute/bin/moses -f $wk_dir/mert-work-Tuning_$type_train/moses.ini < $d > $saving_dir/$type_train'.'translated 2> $saving_dir/$type_train'.'out & wait $!
     
 done
-
+#./moses -minphr-memory -minlexr-memory -f baseline_MTH_IT/all_master_PF42/working/model/moses.ini < baseline_MTH_IT/all_master_PF42/test_defin/PF4.tok.de > baseline_MTH_IT/all_master_PF42/test_defin/PF4.translated 2> baseline_MTH_IT/all_master_PF42/test_defin/PF4error.out & 
 # for d in *_$SL'.'tok; do nohup $path_execute/bin/moses -f $project_name/mert-work-/moses.ini < $i > tuning/${i::(-4)}.tuning.translated 2> tuning/${i:0:2}.tuning.out & wait $! ; done

@@ -29,12 +29,12 @@ class handle_files:
         self.tl = tl
 
     def join_files(self):
-        src_files = map(lambda x: self.root + '/' + x, filter(lambda file: '_' + self.sc + '.txt' in file , self.files))
-        trg_files = map(lambda x: self.root + '/' + x, filter(lambda file: '_' + self.tl + '.txt' in file , self.files))
+        src_files = map(lambda x: self.root + '/' + x, filter(lambda file: '.' + self.sc in file , self.files))
+        trg_files = map(lambda x: self.root + '/' + x, filter(lambda file: '.' + self.tl in file , self.files))
 
         base_filename = self.root + '/' + self.typeT
-        src_filename = base_filename + '.' + self.sc + '.txt'
-        trg_filename = base_filename + '.' + self.tl + '.txt'
+        src_filename = base_filename + '.' + self.sc
+        trg_filename = base_filename + '.' + self.tl
 
         self.group_files(src_filename, src_files)
         self.group_files(trg_filename, trg_files)
@@ -53,14 +53,14 @@ class handle_files:
         """
         Parse big xmls. Should fix partial_size / total_size
         """
-        total_size = os.path.getsize(self.files[0])
+        total_size = os.path.getsize(self.files)
         partial_size = 0
-        file_sc = 'train.' + self.sc + '.txt'
-        file_tg = 'train.' + self.tl + '.txt'
+        file_sc = self.root + '/' + self.typeT + '.' + self.sc
+        file_tg = self.root + '/' + self.typeT + '.' + self.tl
         is_source = True
         with open(file_sc, 'w') as fw_source:
             with open(file_tg, 'w') as fw_target:
-                with open(self.files[0]) as f_xml: 
+                with open(self.files, 'r') as f_xml: 
                     for line in f_xml:
                         partial_size += len(line)
                         line_striped = line.strip()
@@ -91,8 +91,8 @@ class handle_files:
         csv to plain text
         """
         base_file = self.root + '/' + 'csv2file'
-        tg_file = base_file + '_' + self.tl 
-        sc_file = base_file + '_' + self.sc
+        tg_file = base_file + '.' + self.tl 
+        sc_file = base_file + '.' + self.sc
         with fileinput.input(files=self.files, mode='rb') as f_read:
             with open(file=sc_file, mode='wb') as fs_write:
                 with open(file=tg_file, mode='wb') as fg_write:

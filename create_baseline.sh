@@ -36,8 +36,8 @@ if [ ! -d $token_dir ]; then
    mkdir $token_dir
 fi
 
-name_file_train_S=$name_file'.'$SL'.'txt
-name_file_train_T=$name_file'.'$TL'.'txt
+name_file_train_S=$name_file'.'$SL
+name_file_train_T=$name_file'.'$TL
 
 
 name_file_tok=$name_file'.tok'
@@ -97,7 +97,7 @@ fi
 # nohup perl $path_execute/scripts/training/train-model.perl -cores 12 -root-dir $trans_dir -corpus $token_dir/$name_file_clean -f $SL -e $TL -alignment grow-diag-final-and -reordering msd-bidirectional-fe -lm 0':'3':'$ml_dir/$binarise_file':'8 -external-bin-dir $path_execute/tools >& $path_save/training.out &
 
 ### Trying with m-giza
-nohup perl $path_execute/scripts/training/train-model.perl -mgiza -mgiza-cpus 12 -root-dir $trans_dir -corpus $token_dir/$name_file_clean -f $SL -e $TL -alignment grow-diag-final-and -reordering msd-bidirectional-fe -lm 0':'3':'$ml_dir/$binarise_file':'8 -external-bin-dir $path_execute/tools >& $path_save/training.out &
+nohup perl $path_execute/scripts/training/train-model.perl -mgiza -mgiza-cpus 12 -root-dir $trans_dir -corpus $token_dir/$name_file_clean -f $SL -e $TL -alignment grow-diag-final-and -reordering msd-bidirectional-fe -lm 0':'4':'$ml_dir/$binarise_file':'8 -external-bin-dir $path_execute/tools >& $path_save/training.out &
 
 ### It's time to reduce tables!
 function reduce {

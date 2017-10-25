@@ -36,22 +36,23 @@ path_save=$path_save/$project_name
 # tuning directory
 tuning_dir=$path_save'/tuning_data'
 
-if [ ! -d $tuning_dir ]; then
-    echo 'please create a directory tuning_data in' $path_save
-    exit
-fi
-
-count_dir="$(ls -l $tuning_dir | wc -l)"
-if [[ $count_dir > 1 ]]; then
-    echo 'Please choose one dir to work'
-    all_dir="$(ls -l $tuning_dir | awk '{ print $9}')"
-    echo -e $all_dir'\n'
-    actual_dir=""
-    read actual_dir
-    tuning_dir=$tuning_dir/$actual_dir
+if [ ! $name_file ]; then
     if [ ! -d $tuning_dir ]; then
-        echo $actual_dir 'does not exist'
+        echo 'please create a directory tuning_data in' $path_save
         exit
+    fi
+    count_dir="$(ls -l $tuning_dir | wc -l)"
+    if [[ $count_dir > 1 ]]; then
+        echo 'Please choose one dir to work'
+        all_dir="$(ls -l $tuning_dir | awk '{ print $9}')"
+        echo -e $all_dir'\n'
+        actual_dir=""
+        read actual_dir
+        tuning_dir=$tuning_dir/$actual_dir
+        if [ ! -d $tuning_dir ]; then
+            echo $actual_dir 'does not exist'
+            exit
+        fi
     fi
 fi
 
@@ -64,15 +65,29 @@ if [ ! -d $token_dir ]; then
     read -p "token dir have just created"
 fi
 
-name_file_tuning_S=$name_file'_'$SL'.align'
-name_file_tuning_T=$name_file'_'$TL'.align'
+name_file_tuning_S=$name_file'.'$SL
+name_file_tuning_T=$name_file'.'$TL
 name_file_tok=$name_file'.tok'
 
-perl $path_execute/scripts/tokenizer/tokenizer.perl -l $SL < $tuning_dir/$name_file_tuning_S > $token_dir/$name_file_tok'.'$SL
-perl $path_execute/scripts/tokenizer/tokenizer.perl -l $TL < $tuning_dir/$name_file_tuning_T > $token_dir/$name_file_tok'.'$TL
+perl $path_execute/scripts/tokenizer/tokenizer.perl -l $SL -threads 12 < $tuning_dir/$name_file_tuning_S > $token_dir/$name_file_tok'.'$SL
+perl $path_execute/scripts/tokenizer/tokenizer.perl -l $TL -threads 12 < $tuning_dir/$name_file_tuning_T > $token_dir/$name_file_tok'.'$TL
 
 read -p "tokening have already finished..."
 
+opt='N'
+while [[ $opt != 'Y' && $opt != 'N' ]] ; do
+    echo 'Clean data?[Y/N]'
+    read opt
+done
+
+if [[ $opt == 'Y' ]]; then
+    name_file_clean=$name_file'.clean'
+    perl $path_execute/scripts/training/clean-corpus-n.perl $token_dir/$name_file_tok $SL $TL $token_dir/$name_file_clean 1 90
+    echo 'Data cleaned'
+else
+    name_file_clean=$name_file_tok
+fi
+read -p "cleaning finished"
 ############################# TUNINNG ################################
 # nocase for case insensitive
 work_dir=$path_save/working/mert-work-$name_file
@@ -80,4 +95,7 @@ if [ ! -d $work_dir ]; then
     mkdir $work_dir
 fi
 
-nohup perl $path_execute/scripts/training/mert-moses.pl $token_dir/$name_file_tok'.'$SL $token_dir/$name_file_tok'.'$TL $path_execute/bin/moses $path_save/working/model/moses.ini --mertdir $path_execute/bin/ --working-dir $work_dir --nocase  &> $work_dir/mert-out.out &
+#nohup perl $path_execute/scripts/training/mert-moses.pl $token_dir/$name_file_clean'.'$SL $token_dir/$name_file_clean'.'$TL $path_execute/bin/moses $path_save/working/model/moses.ini --mertdir $path_execute/bin/ --working-dir $work_dir --nocase  &> $work_dir/mert-out.out &
+
+nohup perl $path_execute/scripts/training/mert-moses.pl $token_dir/$name_file_clean'.'$SL $token_dir/$name_file_clean'.'$TL /home/mutalj/moses/jonhy_ws/moses $path_save/working/model/moses.ini --mertdir $path_execute/bin/ --working-dir $work_dir --threads=12 &> $work_dir/mert-out.out &
+

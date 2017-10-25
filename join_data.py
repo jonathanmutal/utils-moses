@@ -15,5 +15,6 @@ if __name__ == "__main__":
     parser.add_argument('-tl', '--trg_language', help='language trg',
                         nargs=1, type=str, required=True)
     args = parser.parse_args()
+    print(args)
     hf = handle_files(args.root[0], args.files, args.src_language[0], args.trg_language[0], args.typet[0])
     hf.join_files() # group all files in one.
